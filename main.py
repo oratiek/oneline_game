@@ -8,28 +8,26 @@ class Player:
         self.y = 0
         self.h = 10
         self.w = 10
-        if is_host:
-            self.KEY_UP = pyxel.KEY_UP
-            self.KEY_DOWN = pyxel.KEY_DOWN
-        else:
-            self.KEY_UP = pyxel.KEY_W
-            self.KEY_DOWN = pyxel.KEY_S
+        self.bullet = Bullet()
 
-    def move(self):
-        if pyxel.btn(self.KEY_UP):
+    def update(self):
+        if pyxel.btn(pyxel.KEY_UP):
             self.y -= 1
-        elif pyxel.btn(self.KEY_DOWN):
+        elif pyxel.btn(pyxel.KEY_DOWN):
             self.y += 1
-
-    def shot(self):
-        pass
+        elif pyxel.btn(pyxel.KEY_SPACE):
+            if not self.bullet.shot:
+                self.bullet.shoot(self.x, self.y)
+        
+        self.bullet.update()
 
     def dump(self):
         # 相手に渡すように作る
-        return json.dumps({"x":self.x, "y":self.y}).encode("utf-8")
+        return json.dumps({"x":self.x, "y":self.y, "shot":self.bullet.shot, "bx":self.bullet.x, "by":self.bullet.y}).encode("utf-8")
     
     def draw(self):
         pyxel.rect(self.x, self.y, self.h, self.w, 1)
+        self.bullet.draw()
 
 class Enemy:
     def __init__(self):
@@ -45,23 +43,44 @@ class Enemy:
         print(info)
         #self.x = info["x"]
         self.y = info["y"]
+        self.bx = info["bx"]
+        self.by = info["by"]
+        self.show = info["shot"]
     
     def shot(self):
         pass
 
     def draw(self):
         pyxel.rect(self.x, self.y, self.h, self.w, 1)
+        if self.show:
+            pyxel.rect(200-self.bx, self.by, 5, 5, 1)
 
 class Bullet:
     def __init__(self):
-        self.x = 0
-        self.y = 0
+        self.x = None
+        self.y = None
+        self.h = 5
+        self.w = 5
+        self.shot = False
+   
+    def shoot(self, x, y):
+        self.shot = True
+        self.x = x
+        self.y = y
 
-    def move(self):
-        pass
+    def update(self):
+        if self.shot:
+            self.x += 2
+            if self.x >= 200:
+                self.shot = False
+                self.x = 0
+
+    def draw(self):
+        if self.shot:
+            pyxel.rect(self.x, self.y, self.h, self.w, 1)
     
     def dump(self):
-        pass
+        return json.dumps({"shot":self.shot, "bx":self.x, "by":self.y}).encode("utf-8")
 
 
 class App:
@@ -114,7 +133,7 @@ class App:
         self.client.send(data)
     
     def update(self):
-        self.player.move()
+        self.player.update()
         self.send()
         enemy_info = self.recv()
         if enemy_info:

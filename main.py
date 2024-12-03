@@ -3,16 +3,22 @@ import json
 import socket
 
 class Player:
-    def __init__(self):
+    def __init__(self, is_host: bool):
         self.x = 0
         self.y = 0
         self.h = 10
         self.w = 10
+        if is_host:
+            self.KEY_UP = pyxel.KEY_UP
+            self.KEY_DOWN = pyxel.KEY_DOWN
+        else:
+            self.KEY_UP = pyxel.KEY_W
+            self.KEY_DOWN = pyxel.KEY_S
 
     def move(self):
-        if pyxel.btn(pyxel.KEY_UP):
+        if pyxel.btn(self.KEY_UP):
             self.y -= 1
-        elif pyxel.btn(pyxel.KEY_DOWN):
+        elif pyxel.btn(self.KEY_DOWN):
             self.y += 1
 
     def shot(self):
@@ -64,7 +70,7 @@ class App:
         self.is_host = is_host
         self.host = "localhost"
         self.port = 3000
-        self.player = Player()
+        self.player = Player(is_host)
         self.enemy = Enemy()
         self.player_shot = []
         self.enemy_shot = []
